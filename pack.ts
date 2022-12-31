@@ -397,6 +397,7 @@ function formatHtml(htmlString, isCodaLinks) {
 
     if (htmlValue.length !== 0) {
         htmlValue = htmlValue.replace(/"/g, "'");
+        htmlValue = htmlValue.replace(/(\r\n|\n|\r)/gm, "");
         htmlValue = htmlValue.replace(/(<span style="font-style: bold;">)(.*?)(<\/span>)/g, "<strong>$2</strong>"); // Replace with strong
         htmlValue = htmlValue.replace(/(<span style="display: inline-block;">)(.*?)(<\/span>)/g, ""); // Remove buttons
         htmlValue = htmlValue.replace(/(<span style="font-style: italic;">)(.*?)(<\/span>)/g, "<em>$2</em>"); // Replace with italic
@@ -429,7 +430,7 @@ function formatHtml(htmlString, isCodaLinks) {
 
         // Remove all links related to coda.io if isCodaLinks is true
         if (isCodaLinks) {
-            htmlValue = htmlValue.replace(/<a[^>]*href="https:\/\/coda.io[^>]*>(.*?)<\/a>/g, "$1");
+            htmlValue = htmlValue.replace(/<a[^>]*href='https:\/\/coda.io[^>]*>(.*?)<\/a>/g, "$1");
         }
     }
     return htmlValue;
