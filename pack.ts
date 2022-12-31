@@ -202,7 +202,7 @@ pack.addFormula({
             type: coda.ParameterType.Boolean,
             name: "IsCodaLinks",
             description: "Set as true if you want to remove all Coda links from exported HTML",
-            defaultValue: false,
+            suggestedValue: false,
             optional: true
         })
     ],
@@ -256,7 +256,7 @@ pack.addFormula({
             type: coda.ParameterType.Boolean,
             name: "IsCodaLinks",
             description: "Set as true if you want to remove all Coda links from exported HTML",
-            defaultValue: false,
+            suggestedValue: false,
             optional: true
         })
     ],
@@ -335,7 +335,7 @@ pack.addFormula({
             type: coda.ParameterType.Boolean,
             name: "IsCodaLinks",
             description: "Set as true if you want to remove all Coda links from exported HTML",
-            defaultValue: false,
+            suggestedValue: false,
             optional: true
         })
         // Add more parameters here and in the array below.
@@ -360,7 +360,7 @@ pack.addFormula({
             type: coda.ParameterType.Boolean,
             name: "IsCodaLinks",
             description: "Set as true if you want to remove all Coda links from exported HTML",
-            defaultValue: false,
+            suggestedValue: false,
             optional: true
         })
         // Add more parameters here and in the array below.
