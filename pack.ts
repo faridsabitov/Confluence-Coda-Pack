@@ -12,7 +12,8 @@ pack.setUserAuthentication({
     // The following two URLs are will be found in the API's documentation.
     authorizationUrl: "https://auth.atlassian.com/authorize",
     tokenUrl: "https://auth.atlassian.com/oauth/token",
-    scopes: ["write:confluence-content", "read:confluence-content.all", "write:confluence-content", "read:confluence-content.all", "write:confluence-file", "read:confluence-space.summary", "write:confluence-space", "read:confluence-props", "write:confluence-props", "manage:confluence-configuration", "read:confluence-content.all", "search:confluence", "read:confluence-content.summary", "read:confluence-content.permission", "read:confluence-user", "read:confluence-groups", "write:confluence-groups", "readonly:content.attachment:confluence"],
+    scopes: ["write:confluence-content", "read:confluence-content.all", "write:confluence-content", "read:confluence-content.all", "read:confluence-space.summary", "read:confluence-content.all", "read:confluence-content.summary", "read:confluence-user"],
+    // scopes: ["write:confluence-content", "read:confluence-content.all", "write:confluence-content", "read:confluence-content.all", "write:confluence-file", "read:confluence-space.summary", "write:confluence-space", "read:confluence-props", "write:confluence-props", "manage:confluence-configuration", "read:confluence-content.all", "search:confluence", "read:confluence-content.summary", "read:confluence-content.permission", "read:confluence-user", "read:confluence-groups", "write:confluence-groups", "readonly:content.attachment:confluence"],
 
     // additionalParams: {
     //   audience: "api.atlassian.com",
@@ -195,7 +196,6 @@ pack.addFormula({
         coda.makeParameter({
             type: coda.ParameterType.String,
             name: "Body",
-            optional: true,
             description: "Provide a body for the page to update. You can get the current content of a page as an example from GetPageContent() formula.",
         }),
         coda.makeParameter({
@@ -474,7 +474,7 @@ function formatTable(htmlString) {
     }
 
     // remove all paramaters from all th tags but keep the content
-    table = table.replace(/(<th[^>]*>)(.*?)(<\/th>)/g, "<th>$2</th>");
+    table = table.replace(/(<th [^>]*>)(.*?)(<\/th>)/g, "<th>$2</th>");
     return table
 }
 
