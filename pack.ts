@@ -379,7 +379,7 @@ pack.addFormula({
     },
 });
 
-let innerHtmlExample = '<span>Update confluence with coda page</span> <table> <h2>Team for Confluence</h2> <thead> <tr> <th>Team Name</th> <th>Management</th> <th>[Team Lead] Dev Manager</th> <th>Tech Lead</th> <th>Developers</th> <th>QA</th> </tr> </thead> <tbody> <tr> <td>Terminators</td> <td><span><a href="https://coda.io/d/_d3e25eOmtM_#People_tuKxc/r3102&amp;view=modal">Liat Refael</a>,<a href="https://coda.io/d/_d3e25eOmtM_#People_tuKxc/r1721&amp;view=modal">Ami Ries</a></span></td> <td><span><a href="https://coda.io/d/_d3e25eOmtM_#People_tuKxc/r3102&amp;view=modal">Liat Refael</a></span> </td> <td><span><a href="https://coda.io/d/_d3e25eOmtM_#People_tuKxc/r2028&amp;view=modal">Eli Abraham</a></span> </td> <td><span><a href="https://coda.io/d/_d3e25eOmtM_#People_tuKxc/r780&amp;view=modal">Tetiana Hrebeniuk</a>,<a href="https://coda.io/d/_d3e25eOmtM_#People_tuKxc/r855&amp;view=modal">Alin Varzaru</a>,<a href="https://coda.io/d/_d3e25eOmtM_#People_tuKxc/r1195&amp;view=modal">Kostiantyn Ivanov</a>,<a href="https://coda.io/d/_d3e25eOmtM_#People_tuKxc/r2028&amp;view=modal">Eli Abraham</a>,<a href="https://coda.io/d/_d3e25eOmtM_#People_tuKxc/r2363&amp;view=modal">Valerii Monakhov</a>,<a href="https://coda.io/d/_d3e25eOmtM_#People_tuKxc/r3257&amp;view=modal">Nick Alistratenko</a></span></td> <td><span><a href="https://coda.io/d/_d3e25eOmtM_#People_tuKxc/r1331&amp;view=modal">Amit Kremnitzer</a>,<a href="https://coda.io/d/_d3e25eOmtM_#People_tuKxc/r1873&amp;view=modal">Ilya Zhdanov</a>,<a href="https://coda.io/d/_d3e25eOmtM_#People_tuKxc/r2242&amp;view=modal">Yan Trunov</a></span> </td> </tr> </tbody> </table>'
+let innerHtmlExample = '<div><img src="https://cdn.coda.io/icons/png/color/picnic-table-120.png" width="40px" height="40px"/><h1 style="font-size: 36px; margin-top: 10px">Table Roster</h1><h1 style="text-align: left; margin-top: 0.5em; margin-bottom: 0.5em;"><span>Welcome to Confluence Pack for Coda!</span></h1><div style="text-align: left; margin-top: 0.5em; margin-bottom: 0.5em;"><span>Here you can see an example of how Coda page could be exported to Confluence with one click of a button</span></div><div style="text-align: left; margin-top: 0.5em; margin-bottom: 0.5em;"><span style="display: inline-block;">Update confluence with coda page</span></div><div style="text-align: left; margin-top: 0.5em; margin-bottom: 0.5em;"><span> </span></div><div style="text-align: left; margin-top: 0.5em; margin-bottom: 0.5em;"><br></div><div><table border="1" style="border-collapse: collapse; border-color: transparent;" data-coda-grid-id="grid-Prq92AVI2q" data-coda-display-column-id="c-bhfO0XZfZc" data-coda-view-config-hiddenuimask="0" data-coda-view-config-inheritsdefaultformat="false" data-coda-view-config-tablesearch="&quot;AlwaysShow&quot;"><caption style="text-align: left;"><h2>Table Title</h2></caption><thead><tr><th style="width: 150px; text-align: left; border-bottom: 1px solid #e0e0e0;" data-coda-column-id="c-bhfO0XZfZc" data-coda-column-overflow-style="wrap" data-coda-column-show-empty-groups="false">Title</th><th style="width: 150px; text-align: left; border-bottom: 1px solid #e0e0e0;" data-coda-column-id="c-ULE9q9eI4A" data-coda-column-overflow-style="wrap" data-coda-column-show-empty-groups="false" data-coda-column-format="{&quot;precision&quot;:22,&quot;type&quot;:&quot;num&quot;}">Column 2</th><th style="width: 150px; text-align: left; border-bottom: 1px solid #e0e0e0;" data-coda-column-id="c-730kLfCmOc" data-coda-column-overflow-style="wrap" data-coda-column-show-empty-groups="false" data-coda-column-format="{&quot;precision&quot;:22,&quot;type&quot;:&quot;num&quot;}">Column 3</th><th style="width: 150px; text-align: left; border-bottom: 1px solid #e0e0e0;" data-coda-column-id="c-WU-5_1MvFM" data-coda-column-overflow-style="wrap" data-coda-column-show-empty-groups="false">Sync Spaces</th></tr></thead><tbody><tr><td style="border-top:none;border-right:none;border-bottom:1px solid #e0e0e0;border-left:none;vertical-align:top;">Team A from Coda</td><td style="border-top:none;border-right:none;border-bottom:1px solid #e0e0e0;border-left:none;vertical-align:top;">12</td><td style="border-top:none;border-right:none;border-bottom:1px solid #e0e0e0;border-left:none;vertical-align:top;background-color:#6BB7FF;">45</td><td style="border-top:none;border-right:none;border-bottom:1px solid #e0e0e0;border-left:none;vertical-align:top;"><span><a href="https://coda.io/d/_d8BCazGYeZq#Sync-Spaces_tuces/r1&amp;view=modal">Account Management - Functional Department Alignment</a></span></td></tr><tr><td style="border-top:none;border-right:none;border-bottom:1px solid #e0e0e0;border-left:none;vertical-align:top;">Team B from Coda</td><td style="border-top:none;border-right:none;border-bottom:1px solid #e0e0e0;border-left:none;vertical-align:top;">12</td><td style="border-top:none;border-right:none;border-bottom:1px solid #e0e0e0;border-left:none;vertical-align:top;">32</td><td style="border-top:none;border-right:none;border-bottom:1px solid #e0e0e0;border-left:none;vertical-align:top;"><span><a href="https://coda.io/d/_d8BCazGYeZq#Sync-Spaces_tuces/r4&amp;view=modal">American Well Confluence</a>,<a href="https://coda.io/d/_d8BCazGYeZq#Sync-Spaces_tuces/r1&amp;view=modal">Account Management - Functional Department Alignment</a></span></td></tr><tr><td style="border-top:none;border-right:none;border-bottom:1px solid #e0e0e0;border-left:none;vertical-align:top;">Team C from Coda</td><td style="border-top:none;border-right:none;border-bottom:1px solid #e0e0e0;border-left:none;vertical-align:top;">12</td><td style="border-top:none;border-right:none;border-bottom:1px solid #e0e0e0;border-left:none;vertical-align:top;background-color:#FF9292;">10</td><td style="border-top:none;border-right:none;border-bottom:1px solid #e0e0e0;border-left:none;vertical-align:top;"><span><a href="https://coda.io/d/_d8BCazGYeZq#Sync-Spaces_tuces/r7&amp;view=modal">Amwell Design System</a></span></td></tr></tbody></table></div><div style="text-align: left; margin-top: 0.5em; margin-bottom: 0.5em;"><br></div></div>'
 
 pack.addFormula({
     name: "Test",
@@ -388,26 +388,22 @@ pack.addFormula({
     ],
     resultType: coda.ValueType.String,
     execute: function () {
-        return formatHtml(innerHtmlExample)
+        return formatHtml(innerHtmlExample, true)
     }
 });
 
-function formatHtml(htmlString) {
+function formatHtml(htmlString, isCodaLinks) {
     let htmlValue = htmlString
-    // if htmlValue has table tags inside
-    if (htmlValue.includes("<table>")) {
-        // Get all tables from htmlValue
-        let tables = htmlValue.match(/<table>(.*?)<\/table>/g)
-        // Replace each table content with formatted table
-        tables.forEach(table => {
-            htmlValue = htmlValue.replace(table, formatTable(table))
-        })
-    }
+
     if (htmlValue.length !== 0) {
         htmlValue = htmlValue.replace(/"/g, "'");
         htmlValue = htmlValue.replace(/(<span style="font-style: bold;">)(.*?)(<\/span>)/g, "<strong>$2</strong>"); // Replace with strong
         htmlValue = htmlValue.replace(/(<span style="display: inline-block;">)(.*?)(<\/span>)/g, ""); // Remove buttons
         htmlValue = htmlValue.replace(/(<span style="font-style: italic;">)(.*?)(<\/span>)/g, "<em>$2</em>"); // Replace with italic
+        htmlValue = htmlValue.replace(/<caption[^>]*>(.*?)<\/caption>/g, "$1"); // Remove caption tags
+        
+
+
         // htmlValue = htmlValue.replace(/(<span style="text-decoration: line-through;">)(.*?)(<\/span>)/g,"<em>$2</em>"); // Replace with strikethrough
         htmlValue = htmlValue.replace(/(<span style="text-decoration: underline;">)(.*?)(<\/span>)/g, "<u>$2</u>"); // Replace with underline
         htmlValue = htmlValue.replace(/(<span style="font-family: monospace;">)(.*?)(<\/span>)/g, "<code>$2</code>"); // Replace with monospace code
@@ -417,9 +413,24 @@ function formatHtml(htmlString) {
         // htmlValue = htmlValue.replace(/ style="[^"]*(font-size: [^;]*;)[^"]*"/g,""); // Remove font size styles
         htmlValue = htmlValue.replace(/ style='[^\']*'/g, ""); // Need to identify all styles that we need to remove. Background style is ok to keep //<td data-highlight-colour="#e3fcef">
         htmlValue = htmlValue.replace(/<\/?div[^>]*>/g, "");
-        htmlValue = htmlValue.replace(/(<table[^>]*>)(.*?)(<\/table>)/g, "<table>$2</table>");
         htmlValue = htmlValue.replace(/<\/?img[^>]*>/g, "");
         htmlValue = htmlValue.replace(/<\/?br[^>]*>/g, "");
+        
+        // If htmlValue has table tags inside with any paramaters
+        if (htmlValue.includes("<table")) {
+            // Get all tables from htmlValue
+            let tables = htmlValue.match(/<table(.*?)<\/table>/g)
+        
+            // Replace each table content with formatted table
+            tables.forEach(table => {
+                htmlValue = htmlValue.replace(table, formatTable(table))
+            })
+        }
+
+        // Remove all links related to coda.io if isCodaLinks is true
+        if (isCodaLinks) {
+            htmlValue = htmlValue.replace(/<a[^>]*href="https:\/\/coda.io[^>]*>(.*?)<\/a>/g, "$1");
+        }
     }
     return htmlValue;
 }
@@ -428,7 +439,9 @@ function formatHtml(htmlString) {
 
 // write regex code to delete only the first headings from table tag in html
 function formatTable(htmlString) {
-    let table = htmlString
+    // Clean the table tag and assign the value
+    let table = htmlString.replace(/(<table[^>]*>)(.*?)(<\/table>)/g, "<table>$2</table>");
+
     // Find if there are any headings before the tableHead tag inside table tag and move them before the table tag
     let headings = table.match(/<h[1-3][^>]*>.*?<\/h[1-3]>/g)
     if (headings) {
@@ -438,6 +451,8 @@ function formatTable(htmlString) {
         })
     }
 
+    // remove all paramaters from all th tags but keep the content
+    table = table.replace(/(<th[^>]*>)(.*?)(<\/th>)/g, "<th>$2</th>");
     return table
 }
 
