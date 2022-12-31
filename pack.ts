@@ -189,40 +189,39 @@ pack.addFormula({
         }),
         coda.makeParameter({
             type: coda.ParameterType.String,
-            name: "VersionNumber",
-            description: "A version number of the future page. You can get the current version number from GetPageContent() and then add +1 to show the future version",
-        }),
-        coda.makeParameter({
-            type: coda.ParameterType.String,
             name: "Title",
             description: "Provide a title for the page to update. You can get the current title of a page from GetPageContent() formula.",
-        }),
-        coda.makeParameter({
-            type: coda.ParameterType.String,
-            name: "Type",
-            description: "Provide a type of the page to update. You can get the type of a page as an example from GetPageContent() formula. It might be a blog post or a page",
         }),
         coda.makeParameter({
             type: coda.ParameterType.String,
             name: "Body",
             optional: true,
             description: "Provide a body for the page to update. You can get the current content of a page as an example from GetPageContent() formula.",
+        }),
+        coda.makeParameter({
+            type: coda.ParameterType.Boolean,
+            name: "IsCodaLinks",
+            description: "Set as true if you want to remove all Coda links from exported HTML",
+            defaultValue: false,
+            optional: true
         })
     ],
     resultType: coda.ValueType.String,
     isAction: true,
-    execute: async function ([resourceId, pageURL, version, title, contentType, body], context) {
+    execute: async function ([resourceId, pageURL, title, body, isCodaLinks], context) {
         let page = pageURL.split("/pages/")[1].split("/")[0];
         let url = "https://api.atlassian.com/ex/confluence/" + resourceId + "/rest/api/content/" + page;
+        
+        const pageInformation = await fetchVersion(resourceId, pageURL, context)
 
         let storageValue: string;
-        storageValue = formatHtml(body.toString())
+        storageValue = formatHtml(body.toString(), isCodaLinks)
 
         let response = await context.fetcher.fetch({
             method: "PUT",
             url: url,
             headers: { "Content-Type": "application/json" },
-            body: '{"version": { "number": ' + version + '},"title": "' + title + '","type": "' + contentType + '","body": { "storage": { "value":"' + storageValue + '","representation": "storage"}}}'
+            body: '{"version": { "number": ' + pageInformation.version + '},"title": "' + title + '","type": "' + pageInformation.contentType + '","body": { "storage": { "value":"' + storageValue + '","representation": "storage"}}}'
         });
 
         return response.toString();
@@ -253,17 +252,24 @@ pack.addFormula({
             name: "Page",
             description: "Provide a body for the page to update. You can get the current content of a page as an example from GetPageContent() formula.",
         }),
+        coda.makeParameter({
+            type: coda.ParameterType.Boolean,
+            name: "IsCodaLinks",
+            description: "Set as true if you want to remove all Coda links from exported HTML",
+            defaultValue: false,
+            optional: true
+        })
     ],
     resultType: coda.ValueType.String,
     isAction: true,
-    execute: async function ([resourceId, pageURL, html], context) {
+    execute: async function ([resourceId, pageURL, html, isCodaLinks], context) {
         let page = pageURL.split("/pages/")[1].split("/")[0];
         let url = "https://api.atlassian.com/ex/confluence/" + resourceId + "/rest/api/content/" + page;
 
         const pageInformation = await fetchVersion(resourceId, pageURL, context)
 
         let storageValue: string;
-        storageValue = formatHtml(html.toString())
+        storageValue = formatHtml(html.toString(), isCodaLinks)
 
         let pageTitle: string;
         pageTitle = storageValue.split("</h1>")[0].split("<h1>")[1].toString()
@@ -325,12 +331,19 @@ pack.addFormula({
             name: "HTML",
             description: "<Help text for the parameter>",
         }),
+        coda.makeParameter({
+            type: coda.ParameterType.Boolean,
+            name: "IsCodaLinks",
+            description: "Set as true if you want to remove all Coda links from exported HTML",
+            defaultValue: false,
+            optional: true
+        })
         // Add more parameters here and in the array below.
     ],
     resultType: coda.ValueType.String,
-    execute: async function ([param], context) {
-        let htmlString = param.toString()
-        return formatHtml(htmlString)
+    execute: async function ([html, isCodaLinks], context) {
+        let htmlString = html.toString()
+        return formatHtml(htmlString, isCodaLinks)
     },
 });
 
@@ -343,12 +356,19 @@ pack.addFormula({
             name: "HTML",
             description: "<Help text for the parameter>",
         }),
+        coda.makeParameter({
+            type: coda.ParameterType.Boolean,
+            name: "IsCodaLinks",
+            description: "Set as true if you want to remove all Coda links from exported HTML",
+            defaultValue: false,
+            optional: true
+        })
         // Add more parameters here and in the array below.
     ],
     resultType: coda.ValueType.String,
-    execute: async function ([param], context) {
-        let htmlString = param.toString()
-        htmlString = formatHtml(htmlString)
+    execute: async function ([html, isCodaLinks], context) {
+        let htmlString = html.toString()
+        htmlString = formatHtml(htmlString, isCodaLinks)
 
         let pageTitle: string;
         // pageContent = htmlString.split("</h1>")[0].toString()
@@ -392,7 +412,8 @@ pack.addFormula({
     }
 });
 
-function formatHtml(htmlString, isCodaLinks) {
+
+function formatHtml(htmlString, isCodaLinks = false) {
     let htmlValue = htmlString
 
     if (htmlValue.length !== 0) {
