@@ -417,23 +417,48 @@ function formatHtml(htmlString, isCodaLinks = false) {
     let htmlValue = htmlString
 
     if (htmlValue.length !== 0) {
-        htmlValue = htmlValue.replace(/"/g, "'");
-        htmlValue = htmlValue.replace(/(\r\n|\n|\r)/gm, "");
+        //
+        // Translators
+        //
+        htmlValue = htmlValue.replace(/"/g, "'"); // Change the double quotes to single quotes
+        htmlValue = htmlValue.replace(/(\r\n|\n|\r)/gm, ""); // Remove all new lines
+        
+        // Header Translators
+        // Text effect Translators
         htmlValue = htmlValue.replace(/(<span style="font-style: bold;">)(.*?)(<\/span>)/g, "<strong>$2</strong>"); // Replace with strong
-        htmlValue = htmlValue.replace(/(<span style="display: inline-block;">)(.*?)(<\/span>)/g, ""); // Remove buttons
-        htmlValue = htmlValue.replace(/(<span style="font-style: italic;">)(.*?)(<\/span>)/g, "<em>$2</em>"); // Replace with italic
-        htmlValue = htmlValue.replace(/<caption[^>]*>(.*?)<\/caption>/g, "$1"); // Remove caption tags
+        htmlValue = htmlValue.replace(/(<span style="font-style: italic;">)(.*?)(<\/span>)/g, "<em>$2</em>"); // Replace with italic/emphasis
+        htmlValue = htmlValue.replace(/(<span style="text-decoration: line-through;">)(.*?)(<\/span>)/g, "<del>$2</del>"); // Replace with strikethrough
+        htmlValue = htmlValue.replace(/(<span style="text-decoration: underline;">)(.*?)(<\/span>)/g, "<u>$2</u>"); // Replace with underline
+        htmlValue = htmlValue.replace(/(<span style="font-family: monospace;">)(.*?)(<\/span>)/g, "<code>$2</code>"); // Replace with monospace code
+        htmlValue = htmlValue.replace(/(<blockquote[^>]*><span>)(.*?)(<\/span><\/blockquote>)/g, "<blockquote>$2</blockquote>"); // Replace with block quote
+        
+        // Text breaks Translators
+        // replace all paragraphs
+        htmlValue = htmlValue.replace(/<br>/g, "<br />"); // replace all <br> tags with <br /> tags
+        htmlValue = htmlValue.replace(/<hr>/g, "<hr />"); // replace all <hr> tags with <hr /> tags
+
+        // List Translators
+        htmlValue = htmlValue.replace(/(<ul[^>]*>)(.*?)(<\/ul>)/g, "<ul>$2</ul>"); // remove all parameters from ul tags
+        htmlValue = htmlValue.replace(/(<li[^>]*>)(.*?)(<\/li>)/g, "<li>$2</li>"); // remove all parameters from li tags
+        htmlValue = htmlValue.replace(/(<ol[^>]*>)(.*?)(<\/ol>)/g, "<ol>$2</ol>"); // remove all parameters from ol tags
+        // task list translators
+
         
 
 
-        // htmlValue = htmlValue.replace(/(<span style="text-decoration: line-through;">)(.*?)(<\/span>)/g,"<em>$2</em>"); // Replace with strikethrough
-        htmlValue = htmlValue.replace(/(<span style="text-decoration: underline;">)(.*?)(<\/span>)/g, "<u>$2</u>"); // Replace with underline
+
+
+        htmlValue = htmlValue.replace(/<span style="display: inline-block;">(.*?)<\/span>/g, ""); // Remove buttons
+        
+        htmlValue = htmlValue.replace(/<caption[^>]*>(.*?)<\/caption>/g, "$1"); // Remove caption tags
+        
+        
         htmlValue = htmlValue.replace(/(<span style="font-family: monospace;">)(.*?)(<\/span>)/g, "<code>$2</code>"); // Replace with monospace code
 
         // htmlValue = htmlValue.replace(/ background-color: rgb'/g, "color: rgb"); // Replace background color with color only
         // htmlValue = htmlValue.replace(/(margin[^:]*: [^"]*)/g, ""); // Remove margin styles
         // htmlValue = htmlValue.replace(/ style="[^"]*(font-size: [^;]*;)[^"]*"/g,""); // Remove font size styles
-        htmlValue = htmlValue.replace(/ style='[^\']*'/g, ""); // Need to identify all styles that we need to remove. Background style is ok to keep //<td data-highlight-colour="#e3fcef">
+        // htmlValue = htmlValue.replace(/ style='[^\']*'/g, ""); // Need to identify all styles that we need to remove. Background style is ok to keep //<td data-highlight-colour="#e3fcef">
         htmlValue = htmlValue.replace(/<\/?div[^>]*>/g, "");
         htmlValue = htmlValue.replace(/<\/?img[^>]*>/g, "");
         htmlValue = htmlValue.replace(/<\/?br[^>]*>/g, "");
