@@ -1,60 +1,61 @@
 import * as coda from "@codahq/packs-sdk";
 export const pack = coda.newPack();
 
-pack.addNetworkDomain("atlassian.com");
+
 
 pack.setUserAuthentication({
     type: coda.AuthenticationType.OAuth2,
     authorizationUrl: "https://auth.atlassian.com/authorize",
     tokenUrl: "https://auth.atlassian.com/oauth/token",
     scopes: ["write:confluence-content", "read:confluence-content.all", "read:confluence-space.summary", "read:confluence-user"],
-    additionalParams: {
-        audience: "api.atlassian.com",
-        prompt: "consent",
-    },
+    
+    //Trying to resolve 60 mins token expiration from Eric's example
+    // additionalParams: {
+    //     audience: "api.atlassian.com",
+    //     prompt: "consent",
+    // },
+    // // After approving access, the user should select which instance they want to
+    // // connect to.
+    // requiresEndpointUrl: true,
+    // endpointDomain: "atlassian.com",
+    // postSetup: [{
+    //     type: coda.PostSetupType.SetEndpoint,
+    //     name: "SelectEndpoint",
+    //     description: "Select the site to connect to:",
+    //     // Determine the list of sites they have access to.
+    //     getOptions: async function (context) {
+    //         let url = "https://api.atlassian.com/oauth/token/accessible-resources";
+    //         let response = await context.fetcher.fetch({
+    //             method: "GET",
+    //             url: url,
+    //         });
+    //         let sites = response.body;
+    //         return sites.map(site => {
+    //             // Constructing an endpoint URL from the site ID.
+    //             let url = "https://api.atlassian.com/ex/confluence/" + site.id;
+    //             return { display: site.name, value: url };
+    //         });
+    //     },
+    // }],
 
-    // After approving access, the user should select which instance they want to
-    // connect to.
-    requiresEndpointUrl: true,
-    endpointDomain: "atlassian.com",
-    postSetup: [{
-        type: coda.PostSetupType.SetEndpoint,
-        name: "SelectEndpoint",
-        description: "Select the site to connect to:",
-        // Determine the list of sites they have access to.
-        getOptions: async function (context) {
-            let url = "https://api.atlassian.com/oauth/token/accessible-resources";
-            let response = await context.fetcher.fetch({
-                method: "GET",
-                url: url,
-            });
-            let sites = response.body;
-            return sites.map(site => {
-                // Constructing an endpoint URL from the site ID.
-                let url = "https://api.atlassian.com/ex/confluence/" + site.id;
-                return { display: site.name, value: url };
-            });
-        },
-    }],
-
-    // Determines the display name of the connected account.
-    getConnectionName: async function (context) {
-        // This function is run twice: once before the site has been selected and
-        // again after. When the site hasn't been selected yet, return a generic
-        // name.
-        if (!context.endpoint) {
-            return "Jira";
-        }
-        // Include both the name of the user and server.
-        let server = await getServer(context);
-        let user = await getUser(context);
-        return `${user.displayName} (${server.serverTitle})`;
-    },
+    // // Determines the display name of the connected account.
+    // getConnectionName: async function (context) {
+    //     // This function is run twice: once before the site has been selected and
+    //     // again after. When the site hasn't been selected yet, return a generic
+    //     // name.
+    //     if (!context.endpoint) {
+    //         return "Confluence";
+    //     }
+    //     // Include both the name of the user and server.
+    //     let server = await getServer(context);
+    //     let user = await getUser(context);
+    //     return `${user.displayName} (${server.serverTitle})`;
+    // },
 });
 
 // Get information about the Jira server.
 async function getServer(context: coda.ExecutionContext) {
-    let url = "/rest/api/3/serverInfo";
+    let url = "/rest/api/user/current";
     let response = await context.fetcher.fetch({
         method: "GET",
         url: url,
@@ -72,6 +73,7 @@ async function getUser(context: coda.ExecutionContext) {
     return response.body;
 }
 
+pack.addNetworkDomain("atlassian.com");
 
 const AccessibleResources = coda.makeObjectSchema({
     properties: {
