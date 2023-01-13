@@ -3,45 +3,75 @@ export const pack = coda.newPack();
 
 pack.addNetworkDomain("atlassian.com");
 
-// Testing Document: https://coda.io/d/Confluence-Pack_d8BCazGYeZq/Introduction_suPzs#_lun_E
-// Extension page: https://developer.atlassian.com/console/myapps/971feb19-447d-4c15-915d-1cdd12c085ab/overview
-// Auth: https://auth.atlassian.com/authorize?audience=api.atlassian.com&client_id=zEavHHdhSsFJG0XBFajSIWcogwI4RvNN&scope=write%3Aconfluence-content%20write%3Aconfluence-space%20write%3Aconfluence-file%20read%3Aconfluence-space.summary%20read%3Aconfluence-props%20write%3Aconfluence-props%20manage%3Aconfluence-configuration%20read%3Aconfluence-content.all%20read%3Aconfluence-content.summary%20search%3Aconfluence%20read%3Aconfluence-content.permission%20read%3Aconfluence-user%20write%3Aconfluence-groups%20read%3Aconfluence-groups%20readonly%3Acontent.attachment%3Aconfluence&redirect_uri=https%3A%2F%2Fcoda.io%2FpacksAuth%2Foauth2%2F17572&state=${YOUR_USER_BOUND_VALUE}&response_type=code&prompt=consent
-
 pack.setUserAuthentication({
     type: coda.AuthenticationType.OAuth2,
-    // The following two URLs are will be found in the API's documentation.
     authorizationUrl: "https://auth.atlassian.com/authorize",
     tokenUrl: "https://auth.atlassian.com/oauth/token",
     scopes: ["write:confluence-content", "read:confluence-content.all", "write:confluence-content", "read:confluence-content.all", "read:confluence-space.summary", "read:confluence-content.all", "read:confluence-content.summary", "read:confluence-user"],
-    // scopes: ["write:confluence-content", "read:confluence-content.all", "write:confluence-content", "read:confluence-content.all", "write:confluence-file", "read:confluence-space.summary", "write:confluence-space", "read:confluence-props", "write:confluence-props", "manage:confluence-configuration", "read:confluence-content.all", "search:confluence", "read:confluence-content.summary", "read:confluence-content.permission", "read:confluence-user", "read:confluence-groups", "write:confluence-groups", "readonly:content.attachment:confluence"],
+    additionalParams: {
+        audience: "api.atlassian.com",
+        prompt: "consent",
+    },
 
-    // additionalParams: {
-    //   audience: "api.atlassian.com",
-    //   prompt: "consent",
-    // },
+    // After approving access, the user should select which instance they want to
+    // connect to.
+    requiresEndpointUrl: true,
+    endpointDomain: "atlassian.com",
+    postSetup: [{
+        type: coda.PostSetupType.SetEndpoint,
+        name: "SelectEndpoint",
+        description: "Select the site to connect to:",
+        // Determine the list of sites they have access to.
+        getOptions: async function (context) {
+            let url = "https://api.atlassian.com/oauth/token/accessible-resources";
+            let response = await context.fetcher.fetch({
+                method: "GET",
+                url: url,
+            });
+            let sites = response.body;
+            return sites.map(site => {
+                // Constructing an endpoint URL from the site ID.
+                let url = "https://api.atlassian.com/ex/confluence/" + site.id;
+                return { display: site.name, value: url };
+            });
+        },
+    }],
 
-    // After approving access, the user should select which instance they want to connect to.
-    // requiresEndpointUrl: true,
-    // endpointDomain: "atlassian.com",
-});
-
-
-pack.addFormula({
-    name: "GetCloudID",
-    description: "Getting Cloud ID to start using the pack",
-    parameters: [
-    ],
-    resultType: coda.ValueType.String,
-    execute: async function ([], context) {
-        let response = await context.fetcher.fetch({
-            method: "GET",
-            url: "https://api.atlassian.com/oauth/token/accessible-resources",
-            cacheTtlSecs: 0,
-        });
-
-        return response.body[0].id
+    // Determines the display name of the connected account.
+    getConnectionName: async function (context) {
+        // This function is run twice: once before the site has been selected and
+        // again after. When the site hasn't been selected yet, return a generic
+        // name.
+        if (!context.endpoint) {
+            return "Jira";
+        }
+        // Include both the name of the user and server.
+        let server = await getServer(context);
+        let user = await getUser(context);
+        return `${user.displayName} (${server.serverTitle})`;
     },
 });
+
+// Get information about the Jira server.
+async function getServer(context: coda.ExecutionContext) {
+    let url = "/rest/api/3/serverInfo";
+    let response = await context.fetcher.fetch({
+        method: "GET",
+        url: url,
+    });
+    return response.body;
+}
+
+// Get information about the Jira user.
+async function getUser(context: coda.ExecutionContext) {
+    let url = "/rest/api/3/myself";
+    let response = await context.fetcher.fetch({
+        method: "GET",
+        url: url,
+    });
+    return response.body;
+}
+
 
 const AccessibleResources = coda.makeObjectSchema({
     properties: {
@@ -74,7 +104,6 @@ pack.addSyncTable({
 
             let items = response.body;
 
-
             let rows = [];
             for (let item of items) {
                 let row = {
@@ -94,7 +123,6 @@ pack.addSyncTable({
     },
 });
 
-
 const Page = coda.makeObjectSchema({
     properties: {
         pageId: { type: coda.ValueType.String },
@@ -106,13 +134,13 @@ const Page = coda.makeObjectSchema({
         url: { type: coda.ValueType.String },
         apiUrl: { type: coda.ValueType.String },
     },
-    displayProperty: "title", // Which property above to display by default.
+    displayProperty: "title",
     idProperty: "pageId"
 });
 
 pack.addFormula({
-    name: "GetPageContent",
-    description: "Getting the information out of a specific page by URL",
+    name: "GetConfluencePage",
+    description: "Getting the information out of a specific Confluence page by URL",
     parameters: [
         coda.makeParameter({
             type: coda.ParameterType.String,
@@ -133,7 +161,7 @@ pack.addFormula({
     ],
     resultType: coda.ValueType.Object,
     schema: Page,
-    execute: async function ([resourceId, pageURL, contentType], context) {
+    execute: async function ([resourceId, pageURL, contentType = "storage"], context) {
         let page = pageURL.split("/pages/")[1].split("/")[0];
         let url = "https://api.atlassian.com/ex/confluence/" + resourceId + "/rest/api/content/" + page + "?expand=body." + contentType + ",version";
         let response = await context.fetcher.fetch({
@@ -141,25 +169,6 @@ pack.addFormula({
             url: url,
             cacheTtlSecs: 0,
         });
-
-
-        //'atlas_doc_format', 'view', 'export_view', 'styled_view', 'dynamic', 'editor2', 'anonymous_export_view'
-
-        // let bodyValue = ""
-        // switch(contentType) { 
-        //   case "storage": { 
-        //       bodyValue = response.body.body.storage.value;
-        //       break; 
-        //   } 
-        //   case "atlas_doc_format": { 
-        //       bodyValue = response.body.body.atlas_doc_format.value;
-        //       break; 
-        //   } 
-        //   default: { 
-        //       bodyValue = response.body.body.storage.value;
-        //       break; 
-        //   } 
-        // } 
 
         return {
             pageId: response.body.id,
@@ -176,7 +185,7 @@ pack.addFormula({
 
 pack.addFormula({
     name: "UpdateConfluencePage",
-    description: "Update content of a specific page by URL",
+    description: "Update content of a specific Confluence page by URL",
     parameters: [
         coda.makeParameter({
             type: coda.ParameterType.String,
@@ -211,7 +220,7 @@ pack.addFormula({
     execute: async function ([resourceId, pageURL, title, body, isCodaLinks], context) {
         let page = pageURL.split("/pages/")[1].split("/")[0];
         let url = "https://api.atlassian.com/ex/confluence/" + resourceId + "/rest/api/content/" + page;
-        
+
         const pageInformation = await fetchVersion(resourceId, pageURL, context)
 
         let storageValue: string;
@@ -275,12 +284,13 @@ pack.addFormula({
         pageTitle = storageValue.split("</h1>")[0].split("<h1>")[1].toString()
 
         let pageContent: string;
-        let cropAmount = pageTitle.length + 9;
-        pageContent = storageValue.slice(cropAmount)
+        pageContent = storageValue.split("</h1>")[1].toString()
+        pageContent = pageContent.replace("<h1>", "") // Hot fix. Not sure why we are adding H1 at the end
 
         let response = await context.fetcher.fetch({
             method: "PUT",
             url: url,
+            cacheTtlSecs: 0,
             headers: { "Content-Type": "application/json" },
             body: '{"version": { "number": ' + pageInformation.version + '},"title": "' + pageTitle + '","type": "' + pageInformation.contentType + '","body": { "storage": { "value":"' + pageContent + '","representation": "storage"}}}'
         });
@@ -288,7 +298,6 @@ pack.addFormula({
         return response.toString();
     },
 });
-
 
 async function fetchVersion(resourceId: string, pageURL: string, context): Promise<PageInformation> {
     let page = pageURL.split("/pages/")[1].split("/")[0];
@@ -306,80 +315,41 @@ async function fetchVersion(resourceId: string, pageURL: string, context): Promi
 }
 
 pack.addFormula({
-    name: "GetHTML",
-    description: "<Help text for the formula>",
+    name: "GetCodaPage",
+    description: "Get the code version of Coda page",
     parameters: [
         coda.makeParameter({
             type: coda.ParameterType.Html,
-            name: "HTML",
-            description: "<Help text for the parameter>",
+            name: "CodaPage",
+            description: "Provide a name of the Coda page to export",
         }),
-        // Add more parameters here and in the array below.
     ],
     resultType: coda.ValueType.String,
-    execute: async function ([param], context) {
-        return param.toString();
+    execute: async function ([codaPage], context) {
+        return codaPage.toString();
     },
 });
 
 pack.addFormula({
-    name: "GetFormattedHTML",
-    description: "<Help text for the formula>",
+    name: "GetCodaPageFormattedForConfluence",
+    description: "Get the code version of Coda page formatted for Confluence. You can use it to update the page in Confluence by using 'UpdateConfluencePage' button",
     parameters: [
         coda.makeParameter({
             type: coda.ParameterType.Html,
-            name: "HTML",
-            description: "<Help text for the parameter>",
+            name: "CodaPage",
+            description: "Provide a name of the Coda page to export",
         }),
         coda.makeParameter({
             type: coda.ParameterType.Boolean,
-            name: "IsCodaLinks",
+            name: "RemoveCodaLinks",
             description: "Set as true if you want to remove all Coda links from exported HTML",
-            suggestedValue: false,
             optional: true
         })
-        // Add more parameters here and in the array below.
     ],
     resultType: coda.ValueType.String,
-    execute: async function ([html, isCodaLinks], context) {
-        let htmlString = html.toString()
-        return formatHtml(htmlString, isCodaLinks)
-    },
-});
-
-pack.addFormula({
-    name: "GetFormattedHTMLSection",
-    description: "<Help text for the formula>",
-    parameters: [
-        coda.makeParameter({
-            type: coda.ParameterType.Html,
-            name: "HTML",
-            description: "<Help text for the parameter>",
-        }),
-        coda.makeParameter({
-            type: coda.ParameterType.Boolean,
-            name: "IsCodaLinks",
-            description: "Set as true if you want to remove all Coda links from exported HTML",
-            suggestedValue: false,
-            optional: true
-        })
-        // Add more parameters here and in the array below.
-    ],
-    resultType: coda.ValueType.String,
-    execute: async function ([html, isCodaLinks], context) {
-        let htmlString = html.toString()
-        htmlString = formatHtml(htmlString, isCodaLinks)
-
-        let pageTitle: string;
-        // pageContent = htmlString.split("</h1>")[0].toString()
-        pageTitle = htmlString.split("</h1>")[0].split("<h1>")[1].toString()
-
-        let cropAmount = pageTitle.length + 9;
-        // let cropAmount = 21;
-        let pageContent: string = htmlString.slice(cropAmount)
-
-
-        return pageContent
+    execute: async function ([codaPage, removeCodaLinks = false], context) {
+        let htmlString = codaPage.toString()
+        return formatHtml(htmlString, removeCodaLinks)
     },
 });
 
@@ -399,20 +369,6 @@ pack.addFormula({
     },
 });
 
-let innerHtmlExample = '<div><img src="https://cdn.coda.io/icons/png/color/picnic-table-120.png" width="40px" height="40px"/><h1 style="font-size: 36px; margin-top: 10px">Table Roster</h1><h1 style="text-align: left; margin-top: 0.5em; margin-bottom: 0.5em;"><span>Welcome to Confluence Pack for Coda!</span></h1><div style="text-align: left; margin-top: 0.5em; margin-bottom: 0.5em;"><span>Here you can see an example of how Coda page could be exported to Confluence with one click of a button</span></div><div style="text-align: left; margin-top: 0.5em; margin-bottom: 0.5em;"><span style="display: inline-block;">Update confluence with coda page</span></div><div style="text-align: left; margin-top: 0.5em; margin-bottom: 0.5em;"><span> </span></div><div style="text-align: left; margin-top: 0.5em; margin-bottom: 0.5em;"><br></div><div><table border="1" style="border-collapse: collapse; border-color: transparent;" data-coda-grid-id="grid-Prq92AVI2q" data-coda-display-column-id="c-bhfO0XZfZc" data-coda-view-config-hiddenuimask="0" data-coda-view-config-inheritsdefaultformat="false" data-coda-view-config-tablesearch="&quot;AlwaysShow&quot;"><caption style="text-align: left;"><h2>Table Title</h2></caption><thead><tr><th style="width: 150px; text-align: left; border-bottom: 1px solid #e0e0e0;" data-coda-column-id="c-bhfO0XZfZc" data-coda-column-overflow-style="wrap" data-coda-column-show-empty-groups="false">Title</th><th style="width: 150px; text-align: left; border-bottom: 1px solid #e0e0e0;" data-coda-column-id="c-ULE9q9eI4A" data-coda-column-overflow-style="wrap" data-coda-column-show-empty-groups="false" data-coda-column-format="{&quot;precision&quot;:22,&quot;type&quot;:&quot;num&quot;}">Column 2</th><th style="width: 150px; text-align: left; border-bottom: 1px solid #e0e0e0;" data-coda-column-id="c-730kLfCmOc" data-coda-column-overflow-style="wrap" data-coda-column-show-empty-groups="false" data-coda-column-format="{&quot;precision&quot;:22,&quot;type&quot;:&quot;num&quot;}">Column 3</th><th style="width: 150px; text-align: left; border-bottom: 1px solid #e0e0e0;" data-coda-column-id="c-WU-5_1MvFM" data-coda-column-overflow-style="wrap" data-coda-column-show-empty-groups="false">Sync Spaces</th></tr></thead><tbody><tr><td style="border-top:none;border-right:none;border-bottom:1px solid #e0e0e0;border-left:none;vertical-align:top;">Team A from Coda</td><td style="border-top:none;border-right:none;border-bottom:1px solid #e0e0e0;border-left:none;vertical-align:top;">12</td><td style="border-top:none;border-right:none;border-bottom:1px solid #e0e0e0;border-left:none;vertical-align:top;background-color:#6BB7FF;">45</td><td style="border-top:none;border-right:none;border-bottom:1px solid #e0e0e0;border-left:none;vertical-align:top;"><span><a href="https://coda.io/d/_d8BCazGYeZq#Sync-Spaces_tuces/r1&amp;view=modal">Account Management - Functional Department Alignment</a></span></td></tr><tr><td style="border-top:none;border-right:none;border-bottom:1px solid #e0e0e0;border-left:none;vertical-align:top;">Team B from Coda</td><td style="border-top:none;border-right:none;border-bottom:1px solid #e0e0e0;border-left:none;vertical-align:top;">12</td><td style="border-top:none;border-right:none;border-bottom:1px solid #e0e0e0;border-left:none;vertical-align:top;">32</td><td style="border-top:none;border-right:none;border-bottom:1px solid #e0e0e0;border-left:none;vertical-align:top;"><span><a href="https://coda.io/d/_d8BCazGYeZq#Sync-Spaces_tuces/r4&amp;view=modal">American Well Confluence</a>,<a href="https://coda.io/d/_d8BCazGYeZq#Sync-Spaces_tuces/r1&amp;view=modal">Account Management - Functional Department Alignment</a></span></td></tr><tr><td style="border-top:none;border-right:none;border-bottom:1px solid #e0e0e0;border-left:none;vertical-align:top;">Team C from Coda</td><td style="border-top:none;border-right:none;border-bottom:1px solid #e0e0e0;border-left:none;vertical-align:top;">12</td><td style="border-top:none;border-right:none;border-bottom:1px solid #e0e0e0;border-left:none;vertical-align:top;background-color:#FF9292;">10</td><td style="border-top:none;border-right:none;border-bottom:1px solid #e0e0e0;border-left:none;vertical-align:top;"><span><a href="https://coda.io/d/_d8BCazGYeZq#Sync-Spaces_tuces/r7&amp;view=modal">Amwell Design System</a></span></td></tr></tbody></table></div><div style="text-align: left; margin-top: 0.5em; margin-bottom: 0.5em;"><br></div></div>'
-
-pack.addFormula({
-    name: "Test",
-    description: "",
-    parameters: [
-    ],
-    resultType: coda.ValueType.String,
-    execute: function () {
-        return formatHtml(innerHtmlExample, true)
-    }
-});
-
-
 function formatHtml(htmlString, isCodaLinks = false) {
     let htmlValue = htmlString
 
@@ -422,8 +378,12 @@ function formatHtml(htmlString, isCodaLinks = false) {
         //
         htmlValue = htmlValue.replace(/"/g, "'"); // Change the double quotes to single quotes
         htmlValue = htmlValue.replace(/(\r\n|\n|\r)/gm, ""); // Remove all new lines
-        
+
         // Header Translators
+        // htmlValue = htmlValue.replace(/(<h1[^>]*>)(.*?)(<\/h1>)/g, "<h1>$2</h1>"); // Header1
+        // htmlValue = htmlValue.replace(/(<h2[^>]*>)(.*?)(<\/h2>)/g, "<h2>$2</h2>"); // Header 2
+        // htmlValue = htmlValue.replace(/(<h3[^>]*>)(.*?)(<\/h3>)/g, "<h3>$2</h3>"); // Header 3
+
         // Text effect Translators
         htmlValue = htmlValue.replace(/(<span style="font-style: bold;">)(.*?)(<\/span>)/g, "<strong>$2</strong>"); // Replace with strong
         htmlValue = htmlValue.replace(/(<span style="font-style: italic;">)(.*?)(<\/span>)/g, "<em>$2</em>"); // Replace with italic/emphasis
@@ -431,7 +391,7 @@ function formatHtml(htmlString, isCodaLinks = false) {
         htmlValue = htmlValue.replace(/(<span style="text-decoration: underline;">)(.*?)(<\/span>)/g, "<u>$2</u>"); // Replace with underline
         htmlValue = htmlValue.replace(/(<span style="font-family: monospace;">)(.*?)(<\/span>)/g, "<code>$2</code>"); // Replace with monospace code
         htmlValue = htmlValue.replace(/(<blockquote[^>]*><span>)(.*?)(<\/span><\/blockquote>)/g, "<blockquote>$2</blockquote>"); // Replace with block quote
-        
+
         // Text breaks Translators
         // replace all paragraphs
         htmlValue = htmlValue.replace(/<br>/g, "<br />"); // replace all <br> tags with <br /> tags
@@ -442,32 +402,27 @@ function formatHtml(htmlString, isCodaLinks = false) {
         htmlValue = htmlValue.replace(/(<li[^>]*>)(.*?)(<\/li>)/g, "<li>$2</li>"); // remove all parameters from li tags
         htmlValue = htmlValue.replace(/(<ol[^>]*>)(.*?)(<\/ol>)/g, "<ol>$2</ol>"); // remove all parameters from ol tags
         // task list translators
+        // start with each item first and then replace them with task code
+        //let codaCode = '<ul style="margin-block-start: 1em; margin-block-end: 1em;"><div style="text-align: left; margin-top: 0.5em; margin-bottom: 0.5em;"><input type="checkbox" readonly="" style="width: 2em;"><span>task list item</span></div><div style="text-align: left; margin-top: 0.5em; margin-bottom: 0.5em;"><input type="checkbox" readonly="" style="width: 2em;" checked="true"><span>completed item</span></div></ul>'
+        //let confluenceCode = '<ac:task-list><ac:task><ac:task-status>incomplete</ac:task-status><ac:task-body>task list item</ac:task-body></ac:task><ac:task><ac:task-status>complete</ac:task-status><ac:task-body>completed item</ac:task-body></ac:task></ac:task-list>'
 
-        
+        // htmlValue = htmlValue.replace(/<span style="display: inline-block;">(.*?)<\/span>/g, ""); // Remove buttons // Test with icons and larger style buttons as well
 
-
-
-
-        htmlValue = htmlValue.replace(/<span style="display: inline-block;">(.*?)<\/span>/g, ""); // Remove buttons
-        
         htmlValue = htmlValue.replace(/<caption[^>]*>(.*?)<\/caption>/g, "$1"); // Remove caption tags
-        
-        
-        htmlValue = htmlValue.replace(/(<span style="font-family: monospace;">)(.*?)(<\/span>)/g, "<code>$2</code>"); // Replace with monospace code
+
 
         // htmlValue = htmlValue.replace(/ background-color: rgb'/g, "color: rgb"); // Replace background color with color only
         // htmlValue = htmlValue.replace(/(margin[^:]*: [^"]*)/g, ""); // Remove margin styles
         // htmlValue = htmlValue.replace(/ style="[^"]*(font-size: [^;]*;)[^"]*"/g,""); // Remove font size styles
-        // htmlValue = htmlValue.replace(/ style='[^\']*'/g, ""); // Need to identify all styles that we need to remove. Background style is ok to keep //<td data-highlight-colour="#e3fcef">
+        htmlValue = htmlValue.replace(/ style='[^\']*'/g, ""); // Need to identify all styles that we need to remove. Background style is ok to keep //<td data-highlight-colour="#e3fcef">
         htmlValue = htmlValue.replace(/<\/?div[^>]*>/g, "");
         htmlValue = htmlValue.replace(/<\/?img[^>]*>/g, "");
-        htmlValue = htmlValue.replace(/<\/?br[^>]*>/g, "");
-        
+
         // If htmlValue has table tags inside with any paramaters
         if (htmlValue.includes("<table")) {
             // Get all tables from htmlValue
             let tables = htmlValue.match(/<table(.*?)<\/table>/g)
-        
+
             // Replace each table content with formatted table
             tables.forEach(table => {
                 htmlValue = htmlValue.replace(table, formatTable(table))
@@ -483,11 +438,9 @@ function formatHtml(htmlString, isCodaLinks = false) {
 }
 
 
-
-// write regex code to delete only the first headings from table tag in html
 function formatTable(htmlString) {
     // Clean the table tag and assign the value
-    let table = htmlString.replace(/(<table[^>]*>)(.*?)(<\/table>)/g, "<table>$2</table>");
+    let table = htmlString.replace(/(<table[^>]*>)(.*?)(<\/table>)/g, "<table data-layout='wide'>$2</table>");
 
     // Find if there are any headings before the tableHead tag inside table tag and move them before the table tag
     let headings = table.match(/<h[1-3][^>]*>.*?<\/h[1-3]>/g)
@@ -503,26 +456,6 @@ function formatTable(htmlString) {
     return table
 }
 
-
-
-
-
-// // Replace all inline styles with empty strings
-// str = str.replace(/style=".*?"/g, '');
-
-// // Replace all span tags with empty strings
-// str = str.replace(/<\/?span>/g, '');
-
-// // Replace all br tags with newline characters
-// str = str.replace(/<br>/g, '\n');
-
-
-
-
-// Add support for table title
-
-
-
 const Space = coda.makeObjectSchema({
     properties: {
         spaceId: { type: coda.ValueType.String },
@@ -533,76 +466,8 @@ const Space = coda.makeObjectSchema({
         homepageLink: { type: coda.ValueType.String },
         webLink: { type: coda.ValueType.String },
         apiLink: { type: coda.ValueType.String },
-        // Add more properties here.
     },
-    displayProperty: "name", // Which property above to display by default.
-    idProperty: "key", // Which property above is a unique ID.
+    displayProperty: "name",
+    idProperty: "key",
     featuredProperties: ["spaceId", "webLink"]
-});
-
-
-
-pack.addSyncTable({
-    name: "SyncSpaces",
-    description: "Get the list of all spaces that you have access to",
-    identityName: "SyncSpaces",
-    schema: Space,
-    formula: {
-        name: "SyncSpaces",
-        description: "Get the list of all spaces that you have access to",
-        parameters: [
-            coda.makeParameter({
-                type: coda.ParameterType.String,
-                name: "ResourceID",
-                description: "An ID of our Confluence instance. You can get the Resource ID out of Sync Accessible Resources table",
-            }),
-            // Add more parameters here and in the array below.
-        ],
-        execute: async function ([resourceId], context) {
-            let start: number = (context.sync.continuation?.index as number) || 0;
-            // let isNext: boolean = (context.sync.continuation?.isNext as boolean) || false;
-            let url = "https://api.atlassian.com/ex/confluence/" + resourceId + "/rest/api/space?maxResults=100&startAt=";;
-            let response = await context.fetcher.fetch({
-                method: "GET",
-                url: url,
-                headers: { "Content-Type": "application/json" },
-            });
-
-            let results = response.body.results;
-
-            let rows = [];
-            for (let result of results) {
-                let row = {
-                    spaceId: result.id,
-                    key: result.key,
-                    name: result.name,
-                    spaceType: result.type,
-                    status: result.status,
-                    homepageLink: result._expandable.homepage,
-                    webLink: response.body._links.base + result._links.webui,
-                    apiLink: result._links.self,
-                };
-                rows.push(row);
-            }
-
-            start += 25;
-
-            let urlIsNext = response.body._links.next
-
-
-            let continuation;
-            if (start <= 200) {
-                continuation = {
-                    start: start,
-                    isNext: false,
-                    continuation: continuation,
-                };
-            }
-
-            return {
-                result: rows,
-                continuation: continuation,
-            };
-        },
-    },
 });
