@@ -228,6 +228,9 @@ pack.addFormula({
         let storageValue: string;
         storageValue = formatHtml(body.toString(), removeCodaLinks)
 
+        // Check if title is empty
+        if (title === "") { title = "Blank Title" }
+
         let response = await context.fetcher.fetch({
             method: "PUT",
             url: url,
@@ -235,9 +238,48 @@ pack.addFormula({
             body: '{"version": { "number": ' + pageInformation.version + '},"title": "' + title + '","type": "' + pageInformation.contentType + '","body": { "storage": { "value":"' + storageValue + '","representation": "storage"}}}'
         });
 
-        return response.toString();
+        return statusMessage(response.status.toString());
     },
 });
+
+function statusMessage(status: string) {
+    switch (status) {
+        case "200": return "Page updated successfully";
+        case "400": return "Bad request";
+        case "401": return "Unauthorized";
+        case "403": return "Forbidden";
+        case "404": return "Page not found";
+        case "500": return "Internal server error";
+        case "502": return "Bad gateway";
+        case "503": return "Service unavailable";
+        default: return "Unknown error";
+    }
+}
+
+// Create a new function that will fetch the version of the Confluence page
+async function fetchVersion(resourceId: string, pageURL: string, context: coda.ExecutionContext) {
+    let page = pageURL.split("/pages/")[1].split("/")[0];
+    let url = "https://api.atlassian.com/ex/confluence/" + resourceId + "/rest/api/content/" + page + "?expand=version";
+
+    let response = await context.fetcher.fetch({
+        method: "GET",
+        url: url,
+        cacheTtlSecs: 0,
+    });
+
+    return {
+        contentType: response.body.type,
+        version: response.body.version.number
+    };
+}
+
+// Create a new function that will remove Coda links from HTML
+function formatHtml(html: string, removeCodaLinks: boolean) {
+    if (removeCodaLinks) {
+        html = html.replace(/<a href="https:\/\/coda\.io\/d\/.*?">.*?<\/a>/gm, "");
+    }
+    return html;
+}
 
 type PageInformation = {
     contentType: string,

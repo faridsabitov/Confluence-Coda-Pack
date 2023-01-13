@@ -3,3 +3,4 @@
 .coda.json
 .coda-credentials.json
 node_modules
+_upload_build/browserify-bundle.js
