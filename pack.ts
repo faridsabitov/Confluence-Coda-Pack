@@ -324,6 +324,7 @@ pack.addFormula({
             description: "Provide a name of the Coda page to export",
         }),
     ],
+    connectionRequirement: coda.ConnectionRequirement.None,
     resultType: coda.ValueType.String,
     execute: async function ([codaPage], context) {
         return codaPage.toString();
@@ -347,6 +348,7 @@ pack.addFormula({
         })
     ],
     resultType: coda.ValueType.String,
+    connectionRequirement: coda.ConnectionRequirement.None,
     execute: async function ([codaPage, removeCodaLinks = false], context) {
         let htmlString = codaPage.toString()
         return formatHtml(htmlString, removeCodaLinks)
