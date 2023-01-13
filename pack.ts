@@ -7,7 +7,7 @@ pack.setUserAuthentication({
     type: coda.AuthenticationType.OAuth2,
     authorizationUrl: "https://auth.atlassian.com/authorize",
     tokenUrl: "https://auth.atlassian.com/oauth/token",
-    scopes: ["write:confluence-content", "read:confluence-content.all", "write:confluence-content", "read:confluence-content.all", "read:confluence-space.summary", "read:confluence-content.all", "read:confluence-content.summary", "read:confluence-user"],
+    scopes: ["write:confluence-content", "read:confluence-content.all", "read:confluence-space.summary", "read:confluence-user"],
     additionalParams: {
         audience: "api.atlassian.com",
         prompt: "consent",
