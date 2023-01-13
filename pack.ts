@@ -7,7 +7,7 @@ pack.setUserAuthentication({
     type: coda.AuthenticationType.OAuth2,
     authorizationUrl: "https://auth.atlassian.com/authorize",
     tokenUrl: "https://auth.atlassian.com/oauth/token",
-    scopes: ["write:confluence-content", "read:confluence-content.all", "read:confluence-space.summary", "read:confluence-user"],
+    scopes: ["write:confluence-content", "read:confluence-content.all", "read:confluence-content.summary","read:confluence-space.summary", "read:confluence-props", "write:confluence-props", "read:confluence-user"],
     
     //Trying to resolve 60 mins token expiration from Eric's example
     // additionalParams: {
@@ -211,7 +211,7 @@ pack.addFormula({
         }),
         coda.makeParameter({
             type: coda.ParameterType.Boolean,
-            name: "IsCodaLinks",
+            name: "RemoveCodaLinks",
             description: "Set as true if you want to remove all Coda links from exported HTML",
             suggestedValue: false,
             optional: true
@@ -219,14 +219,14 @@ pack.addFormula({
     ],
     resultType: coda.ValueType.String,
     isAction: true,
-    execute: async function ([resourceId, pageURL, title, body, isCodaLinks], context) {
+    execute: async function ([resourceId, pageURL, title, body, removeCodaLinks], context) {
         let page = pageURL.split("/pages/")[1].split("/")[0];
         let url = "https://api.atlassian.com/ex/confluence/" + resourceId + "/rest/api/content/" + page;
 
         const pageInformation = await fetchVersion(resourceId, pageURL, context)
 
         let storageValue: string;
-        storageValue = formatHtml(body.toString(), isCodaLinks)
+        storageValue = formatHtml(body.toString(), removeCodaLinks)
 
         let response = await context.fetcher.fetch({
             method: "PUT",
@@ -265,7 +265,7 @@ pack.addFormula({
         }),
         coda.makeParameter({
             type: coda.ParameterType.Boolean,
-            name: "IsCodaLinks",
+            name: "RemoveCodaLinks",
             description: "Set as true if you want to remove all Coda links from exported HTML",
             suggestedValue: false,
             optional: true
@@ -273,14 +273,14 @@ pack.addFormula({
     ],
     resultType: coda.ValueType.String,
     isAction: true,
-    execute: async function ([resourceId, pageURL, html, isCodaLinks], context) {
+    execute: async function ([resourceId, pageURL, html, removeCodaLinks], context) {
         let page = pageURL.split("/pages/")[1].split("/")[0];
         let url = "https://api.atlassian.com/ex/confluence/" + resourceId + "/rest/api/content/" + page;
 
         const pageInformation = await fetchVersion(resourceId, pageURL, context)
 
         let storageValue: string;
-        storageValue = formatHtml(html.toString(), isCodaLinks)
+        storageValue = formatHtml(html.toString(), removeCodaLinks)
 
         let pageTitle: string;
         pageTitle = storageValue.split("</h1>")[0].split("<h1>")[1].toString()
@@ -373,7 +373,7 @@ pack.addFormula({
     },
 });
 
-function formatHtml(htmlString, isCodaLinks = false) {
+function formatHtml(htmlString, removeCodaLinks = false) {
     let htmlValue = htmlString
 
     if (htmlValue.length !== 0) {
@@ -434,7 +434,7 @@ function formatHtml(htmlString, isCodaLinks = false) {
         }
 
         // Remove all links related to coda.io if isCodaLinks is true
-        if (isCodaLinks) {
+        if (removeCodaLinks) {
             htmlValue = htmlValue.replace(/<a[^>]*href='https:\/\/coda.io[^>]*>(.*?)<\/a>/g, "$1");
         }
     }
