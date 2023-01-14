@@ -411,11 +411,12 @@ function formatHtml(htmlString, removeCodaLinks = false) {
         // Pre-clean up
         //
 
-        // Remove all margin styles
-        htmlValue = htmlValue.replace(/margin-top*?;/g, "");
+
+        // Remove margin-top: 10px from H1. Coda has first H1 with margin-top: 10px without ";" symbol at the end
+        htmlValue = htmlValue.replace(/<h1 style="font-size: 36px; margin-top: 10px">/g, "<h1>");
 
         // Remove all margin styles
-        htmlValue = htmlValue.replace(/margin.*?;/g, "");
+        htmlValue = htmlValue.replace(/margin.*?;/g, ""); 
 
         // Remove all font size styles
         htmlValue = htmlValue.replace(/font-size.*?;/g, "");
@@ -429,7 +430,7 @@ function formatHtml(htmlString, removeCodaLinks = false) {
         htmlValue = htmlValue.replace(/ style=""/g, "");
 
         // Remove div tags without any styles
-        htmlValue = htmlValue.replace(/<\/?div[^>]*>/g, "");
+        // htmlValue = htmlValue.replace(/<\/?div[^>]*>/g, "");
 
 
         //
@@ -469,6 +470,10 @@ function formatHtml(htmlString, removeCodaLinks = false) {
 
         htmlValue = htmlValue.replace(/<caption[^>]*>(.*?)<\/caption>/g, "$1"); // Remove caption tags
 
+        // Text alignment Translators
+        // Replace div tags that have text-align styles with p tags
+        htmlValue = htmlValue.replace(/(<div style='text-align:left;'>)(.*?)(<\/div>)/g, "<p style='text-align: left;'>$2</p>");
+        htmlValue = htmlValue.replace(/(<div style='text-align:right;'>)(.*?)(<\/div>)/g, "<p style='text-align: right;'>$2</p>");
 
         // htmlValue = htmlValue.replace(/ background-color: rgb'/g, "color: rgb"); // Replace background color with color only
         // htmlValue = htmlValue.replace(/(margin[^:]*: [^"]*)/g, ""); // Remove margin styles
@@ -496,11 +501,14 @@ function formatHtml(htmlString, removeCodaLinks = false) {
         // Cleaning up the htmlValue
         // Remove all span tags without any parameters
         // htmlValue = htmlValue.replace(/<span>(.*?)<\/span>/g, "$1");
+
+        // Remove all div tags without any parameters
+        htmlValue = htmlValue.replace(/<div>(.*?)<\/div>/g, "$1");
     }
     return htmlValue;
 }
 
-let innerHtmlExample = '<div><img src="https://cdn.coda.io/icons/png/color/checked-120.png" width="40px" height="40px"/><h1 style="font-size: 36px; margin-top: 10px">Text effect Translators</h1><div style="text-align: left; margin-top: 0.5em; margin-bottom: 0.5em;"><span>Some text here in </span><span style="font-weight: bold;">bold</span><span>, </span><span style="font-style: italic;">italic, </span><span style="text-decoration: line-through;">strikethrough</span><span>, </span><span style="text-decoration: underline;">underline</span><span>, </span><span style="font-family: monospace;">monospace,</span><span> and, most importantly</span></div><blockquote style="text-align: left; margin-top: 0.5em; margin-bottom: 0.5em;"><span>Blockquote</span></blockquote></div>'
+let innerHtmlExample = '<div><img src="https://cdn.coda.io/icons/png/color/checked-120.png" width="40px" height="40px"/><h1 style="font-size: 36px; margin-top: 10px">Text breaks Translators</h1><div style="text-align: right; margin-top: 0.5em; margin-bottom: 0.5em;"><span>Some text here</span></div><div style="text-align: left; margin-top: 0.5em; margin-bottom: 0.5em;"><span>and then another one in a new line</span><br><span>and last one with CMD+Enter option</span></div><div style="text-align: left; margin-top: 0.5em; margin-bottom: 0.5em;"><br></div></div>'
 
 pack.addFormula({
     name: "Test",
