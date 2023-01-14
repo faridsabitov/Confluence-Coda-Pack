@@ -256,31 +256,6 @@ function statusMessage(status: string) {
     }
 }
 
-// Create a new function that will fetch the version of the Confluence page
-async function fetchVersion(resourceId: string, pageURL: string, context: coda.ExecutionContext) {
-    let page = pageURL.split("/pages/")[1].split("/")[0];
-    let url = "https://api.atlassian.com/ex/confluence/" + resourceId + "/rest/api/content/" + page + "?expand=version";
-
-    let response = await context.fetcher.fetch({
-        method: "GET",
-        url: url,
-        cacheTtlSecs: 0,
-    });
-
-    return {
-        contentType: response.body.type,
-        version: response.body.version.number
-    };
-}
-
-// Create a new function that will remove Coda links from HTML
-function formatHtml(html: string, removeCodaLinks: boolean) {
-    if (removeCodaLinks) {
-        html = html.replace(/<a href="https:\/\/coda\.io\/d\/.*?">.*?<\/a>/gm, "");
-    }
-    return html;
-}
-
 type PageInformation = {
     contentType: string,
     version: number
@@ -328,8 +303,9 @@ pack.addFormula({
         pageTitle = storageValue.split("</h1>")[0].split("<h1>")[1].toString()
 
         let pageContent: string;
-        pageContent = storageValue.split("</h1>")[1].toString()
-        pageContent = pageContent.replace("<h1>", "") // Hot fix. Not sure why we are adding H1 at the end
+        let pageContentLeftPadding: number;
+        pageContentLeftPadding = storageValue.split("</h1>")[0].length + "</h1>".length
+        pageContent = storageValue.substring(pageContentLeftPadding)   
 
         let response = await context.fetcher.fetch({
             method: "PUT",
@@ -339,7 +315,7 @@ pack.addFormula({
             body: '{"version": { "number": ' + pageInformation.version + '},"title": "' + pageTitle + '","type": "' + pageInformation.contentType + '","body": { "storage": { "value":"' + pageContent + '","representation": "storage"}}}'
         });
 
-        return response.toString();
+        return statusMessage(response.status.toString());
     },
 });
 
@@ -395,7 +371,18 @@ pack.addFormula({
     connectionRequirement: coda.ConnectionRequirement.None,
     execute: async function ([codaPage, removeCodaLinks = false], context) {
         let htmlString = codaPage.toString()
-        return formatHtml(htmlString, removeCodaLinks)
+
+        let storageValue: string;
+        storageValue = formatHtml(htmlString, removeCodaLinks)
+
+        let pageTitle: string;
+        pageTitle = storageValue.split("</h1>")[0].split("<h1>")[1].toString()
+
+        let pageContent: string;
+        let pageContentLeftPadding: number;
+        pageContentLeftPadding = storageValue.split("</h1>")[0].length + "</h1>".length
+        pageContent = storageValue.substring(pageContentLeftPadding)   
+        return pageContent;
     },
 });
 
@@ -419,23 +406,49 @@ function formatHtml(htmlString, removeCodaLinks = false) {
     let htmlValue = htmlString
 
     if (htmlValue.length !== 0) {
+
+        //
+        // Pre-clean up
+        //
+
+        // Remove all margin styles
+        htmlValue = htmlValue.replace(/margin-top*?;/g, "");
+
+        // Remove all margin styles
+        htmlValue = htmlValue.replace(/margin.*?;/g, "");
+
+        // Remove all font size styles
+        htmlValue = htmlValue.replace(/font-size.*?;/g, "");
+
+        // Remove all empty space characters from style parameters
+        htmlValue = htmlValue.replace(/style=".*?"/g, function (match) {
+            return match.replace(/\s/g, "");
+        });
+
+        // Remove empty styles
+        htmlValue = htmlValue.replace(/ style=""/g, "");
+
+        // Remove div tags without any styles
+        htmlValue = htmlValue.replace(/<\/?div[^>]*>/g, "");
+
+
         //
         // Translators
         //
         htmlValue = htmlValue.replace(/"/g, "'"); // Change the double quotes to single quotes
         htmlValue = htmlValue.replace(/(\r\n|\n|\r)/gm, ""); // Remove all new lines
 
-        // Header Translators
-        // htmlValue = htmlValue.replace(/(<h1[^>]*>)(.*?)(<\/h1>)/g, "<h1>$2</h1>"); // Header1
-        // htmlValue = htmlValue.replace(/(<h2[^>]*>)(.*?)(<\/h2>)/g, "<h2>$2</h2>"); // Header 2
-        // htmlValue = htmlValue.replace(/(<h3[^>]*>)(.*?)(<\/h3>)/g, "<h3>$2</h3>"); // Header 3
+        // Header Translators: https://coda.io/d/Internal-Confluence-Pack_dZqveeLvxRm/Testing_suSQa?playModeWorkflowId=#Testing-Scenarios_tuIvF/r1
+        htmlValue = htmlValue.replace(/(<h1>)(.*?)(<\/h1>)/g, "<h1>$2</h1>"); // Header1
+        htmlValue = htmlValue.replace(/(<h2>)(.*?)(<\/h2>)/g, "<h2>$2</h2>"); // Header 2
+        htmlValue = htmlValue.replace(/(<h3>)(.*?)(<\/h3>)/g, "<h3>$2</h3>"); // Header 3
 
-        // Text effect Translators
-        htmlValue = htmlValue.replace(/(<span style="font-style: bold;">)(.*?)(<\/span>)/g, "<strong>$2</strong>"); // Replace with strong
-        htmlValue = htmlValue.replace(/(<span style="font-style: italic;">)(.*?)(<\/span>)/g, "<em>$2</em>"); // Replace with italic/emphasis
-        htmlValue = htmlValue.replace(/(<span style="text-decoration: line-through;">)(.*?)(<\/span>)/g, "<del>$2</del>"); // Replace with strikethrough
-        htmlValue = htmlValue.replace(/(<span style="text-decoration: underline;">)(.*?)(<\/span>)/g, "<u>$2</u>"); // Replace with underline
-        htmlValue = htmlValue.replace(/(<span style="font-family: monospace;">)(.*?)(<\/span>)/g, "<code>$2</code>"); // Replace with monospace code
+        // Text effect Translators: https://coda.io/d/Internal-Confluence-Pack_dZqveeLvxRm/Testing_suSQa?playModeWorkflowId=#Testing-Scenarios_tuIvF/r5
+        htmlValue = htmlValue.replace(/(<span style='font-weight:bold;'>)(.*?)(<\/span>)/g, "<strong>$2</strong>"); // Replace with strong
+        htmlValue = htmlValue.replace(/(<span style='font-style:italic;'>)(.*?)(<\/span>)/g, "<em>$2</em>"); // Replace with italic/emphasis
+        htmlValue = htmlValue.replace(/(<span style='text-decoration:line-through;'>)(.*?)(<\/span>)/g, "<del>$2</del>"); // Replace with strikethrough
+        htmlValue = htmlValue.replace(/(<span style='text-decoration:underline;'>)(.*?)(<\/span>)/g, "<u>$2</u>"); // Replace with underline
+        htmlValue = htmlValue.replace(/(<span style='font-family:monospace;'>)(.*?)(<\/span>)/g, "<code>$2</code>"); // Replace with monospace code
         htmlValue = htmlValue.replace(/(<blockquote[^>]*><span>)(.*?)(<\/span><\/blockquote>)/g, "<blockquote>$2</blockquote>"); // Replace with block quote
 
         // Text breaks Translators
@@ -460,8 +473,8 @@ function formatHtml(htmlString, removeCodaLinks = false) {
         // htmlValue = htmlValue.replace(/ background-color: rgb'/g, "color: rgb"); // Replace background color with color only
         // htmlValue = htmlValue.replace(/(margin[^:]*: [^"]*)/g, ""); // Remove margin styles
         // htmlValue = htmlValue.replace(/ style="[^"]*(font-size: [^;]*;)[^"]*"/g,""); // Remove font size styles
-        htmlValue = htmlValue.replace(/ style='[^\']*'/g, ""); // Need to identify all styles that we need to remove. Background style is ok to keep //<td data-highlight-colour="#e3fcef">
-        htmlValue = htmlValue.replace(/<\/?div[^>]*>/g, "");
+        // htmlValue = htmlValue.replace(/ style='[^\']*'/g, ""); // Need to identify all styles that we need to remove. Background style is ok to keep //<td data-highlight-colour="#e3fcef">
+        // htmlValue = htmlValue.replace(/<\/?div[^>]*>/g, "");
         htmlValue = htmlValue.replace(/<\/?img[^>]*>/g, "");
 
         // If htmlValue has table tags inside with any paramaters
@@ -479,9 +492,26 @@ function formatHtml(htmlString, removeCodaLinks = false) {
         if (removeCodaLinks) {
             htmlValue = htmlValue.replace(/<a[^>]*href='https:\/\/coda.io[^>]*>(.*?)<\/a>/g, "$1");
         }
+
+        // Cleaning up the htmlValue
+        // Remove all span tags without any parameters
+        // htmlValue = htmlValue.replace(/<span>(.*?)<\/span>/g, "$1");
     }
     return htmlValue;
 }
+
+let innerHtmlExample = '<div><img src="https://cdn.coda.io/icons/png/color/checked-120.png" width="40px" height="40px"/><h1 style="font-size: 36px; margin-top: 10px">Text effect Translators</h1><div style="text-align: left; margin-top: 0.5em; margin-bottom: 0.5em;"><span>Some text here in </span><span style="font-weight: bold;">bold</span><span>, </span><span style="font-style: italic;">italic, </span><span style="text-decoration: line-through;">strikethrough</span><span>, </span><span style="text-decoration: underline;">underline</span><span>, </span><span style="font-family: monospace;">monospace,</span><span> and, most importantly</span></div><blockquote style="text-align: left; margin-top: 0.5em; margin-bottom: 0.5em;"><span>Blockquote</span></blockquote></div>'
+
+pack.addFormula({
+    name: "Test",
+    description: "",
+    parameters: [
+    ],
+    resultType: coda.ValueType.String,
+    execute: function () {
+        return formatHtml(innerHtmlExample, true)
+    }
+});
 
 
 function formatTable(htmlString) {
